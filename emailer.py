@@ -33,7 +33,7 @@ def send_service_start_notification(settings_path: str, service_name: str,
     try:
         with open(log_path, 'r') as log_file:
             lines = log_file.readlines()[-1 * tail:]
-            lines = '\n'.join(lines)
+            lines = ''.join(lines)
     except Exception as e:
         logging.info('Unable to read log file'
                      f'(notification will be sent anyway): {e}')
@@ -54,6 +54,8 @@ def send(from_name: str, from_address: str, from_password: str,
          subject: str, mainbody: str, fontsize=2, log=False):
 
     mainbody = mainbody.replace('\n', '<br>')
+    mainbody = mainbody.replace('\\n', '<br>')
+
     msg = (
         f'From: {from_name} <{from_address}>\n'
         f'To: {to_name} <{to_address}>\n'
