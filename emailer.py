@@ -11,7 +11,8 @@ import time
 def send_service_start_notification(settings_path: str, service_name: str,
                                     log_path: str, tail=20, delay=300):
 
-    time.sleep(delay)
+    for i in range(delay):
+        time.sleep(1)
     start_time = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     try:
         with open(settings_path, 'r') as json_file:
