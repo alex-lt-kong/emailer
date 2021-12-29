@@ -5,13 +5,19 @@ import datetime as dt
 import json
 import logging
 import smtplib
+import threading
 import time
 
 
 def send_service_start_notification(settings_path: str, service_name: str,
                                     log_path: str, tail=20, delay=300):
 
+    t = threading.currentThread()
+    setattr(t, "stop_thread", False)
     for i in range(delay):
+        if getattr(t, "stop_thread", True) is True:
+            print('send_service_start_notification() stopped')
+            return
         time.sleep(1)
     start_time = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     try:
