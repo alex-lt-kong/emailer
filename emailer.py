@@ -64,7 +64,7 @@ def send_email_from_settings(
     fontsize: int,
     enable_logging: bool):
 
-    # not exception catch here: it fails then it fails
+    # No exception caught: if it fails, it fails
     with open(settings_path, 'r') as json_file:
         json_str = json_file.read()
         settings = json.loads(json_str)
@@ -106,15 +106,13 @@ def send(from_host: str, from_port: int,
         '<meta http-equiv="Content-Type" content="text/html charset=UTF-8" />'
         f'<html><fontsize="{fontsize}" color="black">{mainbody}</font></html>')
 
-    try:
-        smtpObj = smtplib.SMTP(host=from_host, port=from_port)
-        smtpObj.starttls()
-        smtpObj.login(from_address, from_password)
-        smtpObj.sendmail(from_address, to_address, msg.encode('utf-8'))
-        smtpObj.quit()
-        if enable_logging:
-            logging.debug(f'Email [{subject}] sent successfully')
-    except Exception as e:
-        err_msg = f'Failed sending email:\n{e}'
-        print(err_msg)
-        logging.error(err_msg)
+
+    # No exception caught: if it fails, it fails
+    smtpObj = smtplib.SMTP(host=from_host, port=from_port)
+    smtpObj.starttls()
+    smtpObj.login(from_address, from_password)
+    smtpObj.sendmail(from_address, to_address, msg.encode('utf-8'))
+    smtpObj.quit()
+    if enable_logging:
+        logging.info(f'Email [{subject}] sent successfully')
+
