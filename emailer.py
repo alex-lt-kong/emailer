@@ -62,7 +62,7 @@ def send_email_from_settings(
     subject: str, 
     mainbody: str, 
     fontsize: int,
-    enable_logging: bool):
+    enable_logging: bool=True):
 
     # No exception caught: if it fails, it fails
     with open(settings_path, 'r') as json_file:
@@ -86,7 +86,8 @@ def send_email_from_settings(
 def send(from_host: str, from_port: int,
          from_name: str, from_address: str, from_password: str,
          to_name: str, to_address: str,
-         subject: str, mainbody: str, fontsize=2, log=None, enable_logging=False):
+         subject: str, mainbody: str, fontsize=2,
+         log=None, enable_logging=False):
 
     if log is not None:
         enable_logging = log
@@ -114,5 +115,6 @@ def send(from_host: str, from_port: int,
     smtpObj.sendmail(from_address, to_address, msg.encode('utf-8'))
     smtpObj.quit()
     if enable_logging:
+        # logging works as long as caller has configured a logger properly
         logging.info(f'Email [{subject}] sent successfully')
 
