@@ -4,67 +4,96 @@
 import datetime as dt
 import json
 import logging
+import os
 import smtplib
 import threading
 import time
 
 
-def send_service_start_notification(settings_path: str, service_name: str,
-                                    log_path: str, tail=20, delay=300):
+def send_service_start_notification(
+    settings_path: str,
+    service_name: str,
+    path_of_logs_to_send='', log_path=None, 
+    enable_logging=False,
+    tail=20,
+    delay=300):
+
+    if log_path is not None:
+        path_of_logs_to_send = log_path
+        print(
+            'WARNING: `log_path` is deprecated since January 2022, '
+        'use `path_of_logs_to_send` instead'
+        )
+    start_time = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     t = threading.currentThread()
     setattr(t, "stop_thread", False)
     # This stopping mechanism is implemented according to this post:
     # https://stackoverflow.com/questions/18018033/how-to-stop-a-looping-thread-in-python
+
     for i in range(delay):
         if getattr(t, "stop_thread", True) is True:
             print('send_service_start_notification() stopped')
             return
         time.sleep(1)
-    start_time = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    try:
-        with open(settings_path, 'r') as json_file:
-            json_str = json_file.read()
-            json_data = json.loads(json_str)
-    except Exception as e:
-        # What if logging is not configured?
-        # Let's do it next time...
-        logging.info(f'JSON error: {e}')
-        return
-
-    from_host = json_data['email']['from_host']
-    from_port = json_data['email']['from_port']
-    from_address = json_data['email']['from_address']
-    from_password = json_data['email']['from_password']
-    from_name = json_data['email']['from_name']
-    to_address = json_data['email']['to_address']
-    to_name = json_data['email']['to_name']
 
     lines = '[NA]'
     try:
-        with open(log_path, 'r') as log_file:
-            lines = log_file.readlines()[-1 * tail:]
-            lines = ''.join(lines)
+        if os.path.exists(path_of_logs_to_send):
+            with open(path_of_logs_to_send, 'r') as log_file:
+                lines = log_file.readlines()[-1 * tail:]
+                lines = ''.join(lines)
     except Exception as e:
-        logging.info('Unable to read log file'
-                     f'(notification will be sent anyway): {e}')
+        err_msg = f'Unable to read log file (notification will be sent anyway): {e}'
+        print(err_msg)
+        logging.info(err_msg)
 
     mainbody = f'Service [{service_name}] started at {start_time}\n\n'
     mainbody += f'Latest log:\n{lines}'
 
-    send(from_host=from_host, from_port=from_port,
-         from_name=from_name,
-         from_address=from_address, from_password=from_password,
-         to_name=to_name, to_address=to_address,
-         subject=f'Service [{service_name}] started',
-         mainbody=mainbody,
-         fontsize=2, log=True)
+    send_email_from_settings(
+        settings_path=settings_path,
+        subject=f'Service [{service_name}] started',
+        mainbody=mainbody,
+        fontsize=2, enable_logging=enable_logging)
 
+def send_email_from_settings(
+    settings_path: str, 
+    subject: str, 
+    mainbody: str, 
+    fontsize: int,
+    enable_logging: bool):
+
+    # not exception catch here: it fails then it fails
+    with open(settings_path, 'r') as json_file:
+        json_str = json_file.read()
+        settings = json.loads(json_str)
+
+    send(
+        from_host=settings['email']['from_host'],
+        from_port=settings['email']['from_port'],
+        from_name=settings['email']['from_name'],
+        from_address=settings['email']['from_address'],
+        from_password=settings['email']['from_password'],
+        to_name=settings['email']['to_name'],
+        to_address=settings['email']['to_address'],
+        subject=subject,
+        mainbody=mainbody,
+        fontsize=fontsize,
+        enable_logging=enable_logging
+    )
 
 def send(from_host: str, from_port: int,
          from_name: str, from_address: str, from_password: str,
          to_name: str, to_address: str,
-         subject: str, mainbody: str, fontsize=2, log=False):
+         subject: str, mainbody: str, fontsize=2, log=None, enable_logging=False):
+
+    if log is not None:
+        enable_logging = log
+        print(
+            'WARNING: `log` is deprecated since January 2022, '
+            'use `enable_logging` instead'
+        )
 
     mainbody = mainbody.replace('\n', '<br>')
     mainbody = mainbody.replace('\\n', '<br>')
@@ -83,7 +112,9 @@ def send(from_host: str, from_port: int,
         smtpObj.login(from_address, from_password)
         smtpObj.sendmail(from_address, to_address, msg.encode('utf-8'))
         smtpObj.quit()
-        if log:
+        if enable_logging:
             logging.debug(f'Email [{subject}] sent successfully')
     except Exception as e:
-        logging.error(e)
+        err_msg = f'Failed sending email:\n{e}'
+        print(err_msg)
+        logging.error(err_msg)
