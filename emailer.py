@@ -5,13 +5,21 @@ import datetime as dt
 import json
 import logging
 import smtplib
+import threading
 import time
 
 
 def send_service_start_notification(settings_path: str, service_name: str,
                                     log_path: str, tail=20, delay=300):
 
+    t = threading.currentThread()
+    setattr(t, "stop_thread", False)
+    # This stopping mechanism is implemented according to this post:
+    # https://stackoverflow.com/questions/18018033/how-to-stop-a-looping-thread-in-python
     for i in range(delay):
+        if getattr(t, "stop_thread", True) is True:
+            print('send_service_start_notification() stopped')
+            return
         time.sleep(1)
     start_time = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     try:
@@ -24,6 +32,8 @@ def send_service_start_notification(settings_path: str, service_name: str,
         logging.info(f'JSON error: {e}')
         return
 
+    from_host = json_data['email']['from_host']
+    from_port = json_data['email']['from_port']
     from_address = json_data['email']['from_address']
     from_password = json_data['email']['from_password']
     from_name = json_data['email']['from_name']
@@ -42,7 +52,8 @@ def send_service_start_notification(settings_path: str, service_name: str,
     mainbody = f'Service [{service_name}] started at {start_time}\n\n'
     mainbody += f'Latest log:\n{lines}'
 
-    send(from_name=from_name,
+    send(from_host=from_host, from_port=from_port,
+         from_name=from_name,
          from_address=from_address, from_password=from_password,
          to_name=to_name, to_address=to_address,
          subject=f'Service [{service_name}] started',
@@ -50,7 +61,8 @@ def send_service_start_notification(settings_path: str, service_name: str,
          fontsize=2, log=True)
 
 
-def send(from_name: str, from_address: str, from_password: str,
+def send(from_host: str, from_port: int,
+         from_name: str, from_address: str, from_password: str,
          to_name: str, to_address: str,
          subject: str, mainbody: str, fontsize=2, log=False):
 
@@ -66,7 +78,7 @@ def send(from_name: str, from_address: str, from_password: str,
         f'<html><fontsize="{fontsize}" color="black">{mainbody}</font></html>')
 
     try:
-        smtpObj = smtplib.SMTP(host='server172.web-hosting.com', port=587)
+        smtpObj = smtplib.SMTP(host=from_host, port=from_port)
         smtpObj.starttls()
         smtpObj.login(from_address, from_password)
         smtpObj.sendmail(from_address, to_address, msg.encode('utf-8'))
