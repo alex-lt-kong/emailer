@@ -61,7 +61,7 @@ def send_email_from_settings(
     settings_path: str, 
     subject: str, 
     mainbody: str, 
-    fontsize: int,
+    fontsize: int=2,
     enable_logging: bool=True):
 
     # No exception caught: if it fails, it fails
@@ -86,7 +86,7 @@ def send_email_from_settings(
 def send(from_host: str, from_port: int,
          from_name: str, from_address: str, from_password: str,
          to_name: str, to_address: str,
-         subject: str, mainbody: str, fontsize=2,
+         subject: str, mainbody: str, fontsize: int=2,
          log=None, enable_logging=False):
 
     if log is not None:

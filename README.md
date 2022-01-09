@@ -20,7 +20,7 @@ emailer.send()
 ```
 export PYTHONPATH="$HOME/bin:$PYTHONPATH"
 ```
-and them import and use as a ordinary Python package
+and them import and use as an ordinary Python package
 ```
 import emailer.emailer as em
 
