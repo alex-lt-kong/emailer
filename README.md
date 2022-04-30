@@ -26,3 +26,5 @@ import emailer.emailer as em
 
 em.send()
 ```
+
+* If you want the repo to be available in cron tasks, also adding `PYTHONPATH=[RepoDir]` to crontab file.
