@@ -17,9 +17,8 @@ emailer.send()
 import importlib
 
 emailer = importlib.machinery.SourceFileLoader(
-                    fullname='emailer',
-                    path='path to this repo'
-                ).load_module()
+    fullname='emailer',path='/path/to/this/repo'
+).load_module()
 
 emailer.send()
 ```
