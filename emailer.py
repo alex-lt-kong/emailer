@@ -13,16 +13,17 @@ import time
 def send_service_start_notification(
     settings_path: str,
     service_name: str,
-    path_of_logs_to_send='', log_path=None, 
+    path_of_logs_to_send='', log_path=None,
     enable_logging=False,
     tail=20,
-    delay=300):
+    delay=300
+):
 
     if log_path is not None:
         path_of_logs_to_send = log_path
         print(
             'WARNING: `log_path` is deprecated since January 2022, '
-        'use `path_of_logs_to_send` instead'
+            'use `path_of_logs_to_send` instead'
         )
     start_time = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -57,12 +58,14 @@ def send_service_start_notification(
         mainbody=mainbody,
         fontsize=2, enable_logging=enable_logging)
 
+
 def send_email_from_settings(
-    settings_path: str, 
-    subject: str, 
-    mainbody: str, 
-    fontsize: int=2,
-    enable_logging: bool=True):
+    settings_path: str,
+    subject: str,
+    mainbody: str,
+    fontsize: int = 2,
+    enable_logging: bool = True
+):
 
     # No exception caught: if it fails, it fails
     with open(settings_path, 'r') as json_file:
@@ -82,6 +85,7 @@ def send_email_from_settings(
         fontsize=fontsize,
         enable_logging=enable_logging
     )
+
 
 def send(from_host: str, from_port: int,
          from_name: str, from_address: str, from_password: str,
@@ -107,7 +111,6 @@ def send(from_host: str, from_port: int,
         '<meta http-equiv="Content-Type" content="text/html charset=UTF-8" />'
         f'<html><fontsize="{fontsize}" color="black">{mainbody}</font></html>')
 
-
     # No exception caught: if it fails, it fails
     smtpObj = smtplib.SMTP(host=from_host, port=from_port)
     smtpObj.starttls()
@@ -117,4 +120,3 @@ def send(from_host: str, from_port: int,
     if enable_logging:
         # logging works as long as caller has configured a logger properly
         logging.info(f'Email [{subject}] sent successfully')
-
